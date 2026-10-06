@@ -90,7 +90,7 @@ If the versions do not match, or you get `ModuleNotFoundError`, the installation
 ## 5. Step 1: Smoke Test (Synthetic Data, Offline)
 
 
-1. Keep `USE_REAL = IN_COLAB and False` unchanged in the first code cell (this uses synthetic data).
+1. `USE_REAL = False` 
 2. Run cells in order from the top through the "Get the data" cell. You should see `recordings: … | subjects: […]`.
 3. Run the following `build_dataset` and `evaluate` cells. If it prints `Cohen's kappa` and `spread`, it passes.
 
@@ -98,27 +98,11 @@ If the versions do not match, or you get `ModuleNotFoundError`, the installation
 
 **Do this step only after the smoke test passes.**
 
-1. In the repo root, first create the cache folder so the data lands here (and will not be committed):
-   ```
-   mkdir data_cache
-   ```
-   Make sure `.gitignore` contains `data_cache/` and `.venv/`.
-2. In the first code cell of the notebook, change
-   ```python
-   USE_REAL = IN_COLAB and False
-   ```
-   to
+1. 
    ```python
    USE_REAL = True
    ```
-   (The `and False` makes it always False, including locally. You do not need to delete the Colab-related code; only change this line.)
-3. Run the "Get the data" cell. It downloads data for **3 subjects** (`subset=[0, 1, 2]`).
-   - **The first download takes over 20 minutes.** During this time the cell will keep showing as running, with no progress bar; do not assume it is frozen. You can check whether `.edf` files are increasing in `data_cache/`.
-   - After the download completes, it is cached locally and does not need to be downloaded again.
-   - **Everyone should use the same subject subset** so the numbers match across team members.
-4. After downloading, run the `build_dataset` and `evaluate` cells and look at κ, macro-F1, and `spread`.
-
-**Reference numbers**: The team's first baseline run was `mean κ 0.720 (sd 0.119, range 0.589–0.822 across 3 subjects)`, pooled κ 0.729. Your results should be broadly consistent with this. If they differ a lot, first check: whether the number of subjects is 3 and whether dependency versions are consistent.
+2. run all cells
 
 ## 7. Common Issues
 
