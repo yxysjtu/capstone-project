@@ -11,7 +11,7 @@ This guide helps you set up the environment on your own computer and use Jupyter
 
 ## 0. Prerequisites
 
-- **Git** and **Python** are installed (version: `<fill in team lead's Python version>`; try to keep it consistent. Run `python --version` to check).
+- **Git** and **Python** are installed (version: `Python 3.11.9`; try to keep it consistent. Run `python --version` to check).
 - **VS Code** is installed, with the Python and Jupyter extensions installed.
 - Leave about 1–2 GB of disk space (real data cache plus dependencies).
 
