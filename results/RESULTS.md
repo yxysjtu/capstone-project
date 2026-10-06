@@ -27,12 +27,12 @@ Paste the metric straight from the harness — `rep["summary"]` prints the requi
 `mean cohens_kappa 0.61 (sd 0.12, range 0.34-0.73 across 8 subjects)`. A pooled number with no
 spread is half a result.
 
-| # | Date | What changed & why (one line) | Primary metric **with spread** | Better than previous? | If not — why it was kept | Commit | Description |
-|---|---|---|---|---|---|---|---|
-| 1 | 2026-10-06 | supplied baseline, unchanged (RF, `imbalance="balanced"`, no preprocessing, default Welch features) — establish the floor; 3 subjects (`subset=[0,1,2]`), leave-one-subject-out | mean κ 0.720 (sd 0.119, range 0.589–0.822 across 3 subjects) | — (baseline) | — | `a1b2c3d` |  |
-| 2 |  |  |  | yes / no |  |  |  |
-| 3 |  |  |  | yes / no |  |  |  |
-| 4 |  |  |  | yes / no |  |  |  |
+| # | Date | What changed & why (one line) | Primary metric **with spread** | Better than previous? | If not — why it was kept | Commit |
+|---|---|---|---|---|---|---|
+| 1 | 2026-10-06 | supplied baseline, unchanged (RF, `imbalance="balanced"`, no preprocessing, default Welch features) — establish the floor; 3 subjects (`subset=[0,1,2]`), leave-one-subject-out | mean κ 0.720 (sd 0.119, range 0.589–0.822 across 3 subjects) | — (baseline) | — | `a1b2c3d` |
+| 2 |  |  |  | yes / no |  |  |
+| 3 |  |  |  | yes / no |  |  |
+| 4 |  |  |  | yes / no |  |  |
 
 *"Better" means better under the same honest harness — same split unit, same evaluation mode,
 same seed. A change that lowers the metric can still be the right call (simpler, faster, more
@@ -42,15 +42,16 @@ silent higher mean.*
 
 
 
-**TODO: Iteration 1 detail (supplied baseline, subject-wise LOSO, n = 3 subjects)**
+- **Iteration 1 detail (supplied baseline, subject-wise LOSO, n = 3 subjects)**
+  - Pooled over all folds: κ 0.729 · macro-F1 0.622 · accuracy 0.868
+  - Per-subject κ: mean 0.720, sd 0.119, range 0.589–0.822
+  - Note: accuracy (0.868) is well above macro-F1 (0.622); Wake dominates the epochs
+    (~69% on Sleep-Cassette), so accuracy is inflated — read κ / macro-F1 / confusion matrix.
+  - Yardstick: human inter-rater κ ≈ 0.76; published subject-wise models ≈ 0.79–0.82.
+  - Prediction made before running: <TODO>
+  - Leakage demo: random 5-fold κ = 0.899, subject-wise κ = 0.729, gap = +0.170
 
-- Pooled over all folds: κ 0.729 · macro-F1 0.622 · accuracy 0.868
-- Per-subject κ: mean 0.720, sd 0.119, range 0.589–0.822
-- Note: accuracy (0.868) is well above macro-F1 (0.622); Wake dominates the epochs
-  (~69% on Sleep-Cassette), so accuracy is inflated — read κ / macro-F1 / confusion matrix.
-- Yardstick: human inter-rater κ ≈ 0.76; published subject-wise models ≈ 0.79–0.82.
-- Prediction made before running: <...>
-- Leakage demo: random 5-fold κ = <…>, subject-wise κ = <…>, gap = <…>
+  
 
 ## ⚠️ Before you fill in many rows — the garden of forking paths
 
