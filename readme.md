@@ -57,7 +57,7 @@ pip install ipykernel
 - `requirements-lock.txt`: core dependencies, with **versions pinned**, to ensure everyone has the same environment and reproducible results.
 - `requirements-real.txt`: `mne==1.10.1` and `wfdb==4.3.0` required for real data. **Do not upgrade the versions casually**; upgrading may silently change data reading results.
 
-## 3. Verify the Environment
+## 3. Verify the Environment (optional)
 
 In a terminal with the virtual environment activated, run:
 
