@@ -1,0 +1,23 @@
+# Virtual environment (each person installs their own from requirements-lock.txt)
+.venv/
+venv/
+
+# Downloaded Sleep-EDF data (large; re-downloadable)
+data_cache/
+*.edf
+
+# Created by notebook cell 1 when the import fails (a clone of the course repo)
+_bsp_repo/
+
+# Python
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
