@@ -89,16 +89,6 @@ If the versions do not match, or you get `ModuleNotFoundError`, the installation
 
 ## 5. Step 1: Smoke Test (Synthetic Data, Offline)
 
-### Option A: Terminal
-
-```
-cd tracks
-python sleep_edf.py
-```
-
-Success criteria: it prints the dataset card, then a line `SMOKE (synthetic) LOSO:` (including accuracy, cohens_kappa, macro_f1, n_groups), and finally a confusion matrix. If it finishes without errors, it passes. The numbers themselves do not matter.
-
-### Option B: Notebook
 
 1. Keep `USE_REAL = IN_COLAB and False` unchanged in the first code cell (this uses synthetic data).
 2. Run cells in order from the top through the "Get the data" cell. You should see `recordings: … | subjects: […]`.
