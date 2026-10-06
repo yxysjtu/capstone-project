@@ -34,6 +34,7 @@ At the repo root, you should see `tracks/`, `src/`, `notebooks/`, `requirements-
 python -m venv .venv
 .venv\Scripts\Activate.ps1
 $env:PYTHONUTF8 = "1"
+pip install -r requirements.txt
 pip install -r requirements-lock.txt
 pip install -r requirements-real.txt
 pip install ipykernel
@@ -47,6 +48,7 @@ pip install ipykernel
 ```
 python3 -m venv .venv
 source .venv/bin/activate
+pip install -r requirements.txt
 pip install -r requirements-lock.txt
 pip install -r requirements-real.txt
 pip install ipykernel
