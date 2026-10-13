@@ -29,7 +29,7 @@ spread is half a result.
 | # | Date | What changed & why (one line) | Primary metric **with spread** | Better than previous? | If not — why it was kept | Commit |
 |---|---|---|---|---|---|---|
 | 1 | 2026-10-06 | supplied baseline, unchanged (RF, `imbalance="balanced"`, no preprocessing, default Welch features) — establish the floor; 3 subjects (`subset=[0,1,2]`), leave-one-subject-out | mean κ 0.720 (sd 0.119, range 0.589–0.822 across 3 subjects) | — (baseline) | — | `a1b2c3d` |
-| 2 | 2026-10-12 | Imbalance: `imbalance="none"` instead of `"balanced"` (one change; same 11 features, 3 subjects, LOSO, seed 0) — does class weighting help the rare N1 class? | mean cohens_kappa 0.764 (sd 0.085, range 0.668–0.831 across 3 subjects); macro-F1 0.695 (was 0.622); N1 recall 0.35 (was 0.20); per subject: SC400 0.589→0.668, SC401 0.822→0.831, SC402 0.749→0.792 (all 3 up) | yes | — (provisional: re-test after cropping changes the class balance) | `<hash>` |
+| 2 | 2026-10-12 | Imbalance: `imbalance="none"` instead of `"balanced"` (one change; same 11 features, 3 subjects, LOSO, seed 0) — does class weighting help the rare N1 class? | mean cohens_kappa 0.764 (sd 0.085, range 0.668–0.831 across 3 subjects); macro-F1 0.695 (was 0.622); N1 recall 0.35 (was 0.20); per subject: SC400 0.589→0.668, SC401 0.822→0.831, SC402 0.749→0.792 (all 3 up) | yes | — (provisional: re-test after cropping changes the class balance) | `94c2db5` |
 | 3 |  |  |  | yes / no |  |  |
 | 4 |  |  |  | yes / no |  |  |
 
