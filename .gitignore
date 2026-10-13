@@ -1,4 +1,5 @@
-# Virtual environment (each person installs their own from requirements-lock.txt)
+# Virtual environments (each person installs their own from requirements-lock.txt)
+.venv*/
 .venv/
 venv/
 

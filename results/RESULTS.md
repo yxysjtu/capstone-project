@@ -17,9 +17,8 @@
 > weakness. Rows here are also direct evidence for "Reproducibility & engineering" and "Report
 > quality & defence".
 
-**Track:** `<sleep_edf | ecg_cinc2017 | har | ctg_ctu_uhb | emg_ninapro | bci_eegmmidb>` ·
-**Split unit:** `<subject | record | recording>` · **Primary metric:** `<Cohen's κ | macro-F1>` ·
-**Evaluation mode(s):** `<new-subject | within-subject + new-subject>`
+**Track:** `sleep_edf` · **Split unit:** `subject` · **Primary metric:** `Cohen's κ` ·
+**Evaluation mode(s):** `new-subject`
 
 ## Iteration log
 
@@ -30,7 +29,7 @@ spread is half a result.
 | # | Date | What changed & why (one line) | Primary metric **with spread** | Better than previous? | If not — why it was kept | Commit |
 |---|---|---|---|---|---|---|
 | 1 | 2026-10-06 | supplied baseline, unchanged (RF, `imbalance="balanced"`, no preprocessing, default Welch features) — establish the floor; 3 subjects (`subset=[0,1,2]`), leave-one-subject-out | mean κ 0.720 (sd 0.119, range 0.589–0.822 across 3 subjects) | — (baseline) | — | `a1b2c3d` |
-| 2 |  |  |  | yes / no |  |  |
+| 2 | 2026-10-12 | Imbalance: `imbalance="none"` instead of `"balanced"` (one change; same 11 features, 3 subjects, LOSO, seed 0) — does class weighting help the rare N1 class? | mean cohens_kappa 0.764 (sd 0.085, range 0.668–0.831 across 3 subjects); macro-F1 0.695 (was 0.622); N1 recall 0.35 (was 0.20); per subject: SC400 0.589→0.668, SC401 0.822→0.831, SC402 0.749→0.792 (all 3 up) | yes | — (provisional: re-test after cropping changes the class balance) | `94c2db5` |
 | 3 |  |  |  | yes / no |  |  |
 | 4 |  |  |  | yes / no |  |  |
 
@@ -50,6 +49,17 @@ silent higher mean.*
   - Yardstick: human inter-rater κ ≈ 0.76; published subject-wise models ≈ 0.79–0.82.
   - Prediction made before running: <TODO>
   - Leakage demo: random 5-fold κ = 0.899, subject-wise κ = 0.729, gap = +0.170
+
+- **Iteration 2 detail (`imbalance="none"` vs `"balanced"`, same features, subject-wise LOSO, n = 3 subjects)**
+  - Pooled: κ 0.769 (was 0.729) · macro-F1 0.695 (was 0.622) · balanced accuracy 0.670 (was 0.592) · accuracy 0.885 (was 0.868)
+  - Per-subject κ: SC400 0.589→0.668, SC401 0.822→0.831, SC402 0.749→0.792 — all 3 up, largest gain on the worst subject
+  - Confusion-matrix cells that moved (row-normalised): N3→N3 0.34→0.58 and N3→W 0.35→0.13 (the main gain);
+    N1→N1 0.20→0.35 (N1→W 0.34→0.27, N1→N2 0.34→0.27); REM→REM 0.54→0.56; N2→N2 0.91→0.89; W→W 0.97 unchanged
+  - Remaining errors: REM→N2 0.35, N3→N2 0.29, N1 split between W and N2; worst subject SC400 macro-F1 0.504
+  - Possible explanation (not tested): with only 2 training subjects per fold, heavily up-weighted N3/N1 epochs may make
+    the trees fit those subjects' patterns, which then transfer poorly to the held-out subject
+  - Prediction made before running: weighting would help N1 — falsified on this data
+  - Provisional: re-test after cropping (iteration plan row 2), since cropping changes the class balance
 
   
 
@@ -108,9 +118,10 @@ add rows as the pipeline grows, and note the alternative you rejected.
 | 2. Preprocessing |  |  |  |  |  |
 | 3. Feature extraction |  |  |  |  |  |
 | 4. Feature selection | *e.g.* `select="none"` | ANOVA `SelectKBest`, tree importances | 14 features vs. ~1 800 epochs — pruning risked more than it saved | 1 | *e.g.* **yes, iter 4** — `select_k=20` was a no-op (harness said so); switched to `k=6` |
-| 5. Classification, incl. `imbalance` | *e.g.* `imbalance="balanced"` | `"none"`, `"resample"`, `"threshold"` | *(if you kept the default, say you looked and why — a silent default earns nothing)* |  |  |
+| 5. Classification, incl. `imbalance` | `imbalance="none"` (provisional), random forest kept | `"balanced"` (default); other learners not needed — course allows keeping one learner and spending iterations on features | On uncropped data, class weighting lowered κ for all 3 subjects (mean 0.720 vs 0.764) and N1 recall (0.20 vs 0.35); re-test after cropping. Configurations compared at this stage: 2 | 2 | pending |
 | 6. Inference |  |  |  |  |  |
 | 7. Reporting |  |  |  |  |  |
+| Environment | Python 3.11 + `requirements-lock.txt` + `requirements-real.txt` | Python 3.14 with unpinned packages | On Python 3.14 the same baseline gave κ 0.704 instead of 0.720; with the pinned versions every team member reproduces 0.720 exactly | 1 | — |
 
 ## Revisions — the ones that went **backwards** (Criterion 9's actual evidence)
 
