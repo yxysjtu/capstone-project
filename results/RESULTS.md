@@ -84,6 +84,20 @@ silent higher mean._
   - Spread across subjects doubled (sd 0.085 → 0.193): performance during the sleep period varies a lot between subjects, which motivates the next preprocessing steps
   - Prediction made before running: <TODO>
 
+- **Planned comparison: EEG review before filter choice (written before running filter)**
+  - Signal diagnosis on the cropped nights:
+    - Quality control: 0 flat epochs, 0 epochs > 500 µV, 1 clipped epoch in total (from SC4022E0); median peak 55–89 µV per night → no broken data, no epochs rejected
+    - Powerline: no line at 50 Hz in the PSD (50 Hz is also the Nyquist frequency at 100 Hz) → no notch filter
+    - Slow artifacts / baseline wander: very high power below ~0.5 Hz, highest in W (as high as in N3). Likely eye movements and blinks, movement and sweat. This matches the W→N3 errors in row 2.2 → Candidate filtering: high-pass at 0.3 Hz (not higher, to keep the 0.5–2 Hz delta waves that define N3)
+    - Muscle (EMG) shelf: flat, ~10× higher power above ~20 Hz in W than in the sleep stages → noise for the EEG, but also a marker of Wake → Candidate filtering: band-pass 0.3–35 Hz, to test whether removing it helps or hurts
+    - Signal that must be preserved: delta waves in N3, K-complexes in N2, spindle peak at ~13–14 Hz in N2
+  - Plan: 3 configurations, all on cropped data with `imbalance="none"` (as row 2.2), 3 subjects, LOSO, seed 0:
+    1. no filter (is row 2.2)
+    2. high-pass 0.3 Hz (`preprocess="denoise"`, `baseline="highpass"`, `hp_fc=0.3`)
+    3. band-pass 0.3–35 Hz (`preprocess="bandpass"`, `eeg_band=(0.3, 35)`)
+  - Not tested: notch (because no 50 Hz line); wavelet denoising (because no frequent spikes seen in the diagnosis); epoch rejection (because no broken epochs)
+  - Prediction made before running: <todo>
+
 ## ⚠️ Before you fill in many rows — the garden of forking paths
 
 The harness guarantees that **no single run** leaks a subject. It cannot guarantee anything
