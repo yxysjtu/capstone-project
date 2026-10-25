@@ -129,7 +129,7 @@ silent higher mean._
   - Correction to rows 2.3-2.4: the low frequency power was described there as "baseline drift below 0.5 Hz". That description is not accurate. It is a slow peak, not drift. The filter choice is unchanged.
   - 1-30 Hz slope: W -1.90, N1 -1.83, N2 -2.59, N3 -2.95, REM -1.99. The shape lies between pink and brown, and N2/N3 are steeper than brown
   - The shape alone does not tell whether it is contamination or physiology, and here it can be physiology because it changes systematically with sleep stage (steepest in deep sleep) and it carries known rhythms on top (spindle peak at ~13-14 Hz in N2)
-  - The remedy for brown noise (a high-pass) would have to be raised several Hz to change this shape, which would remove the 0.5-4 Hz delta waves that define N3. It is therefore kept.
+  - The remedy for brown noise (a high-pass) would have to be raised several Hz to change this shape, which would remove the 0.5-4 Hz delta waves that define N3. It is therefore kept. | `ef7f04b` |
 
 ## ⚠️ Before you fill in many rows — the garden of forking paths
 
