@@ -12,6 +12,7 @@ from adapter import (TrackAdapter, TrackMeta, Recording, default_baseline,
                      bandpass_notch, wavelet_denoise, denoise, spectral_bandpower,
                      DENOISE_CFG_KEYS, SPECTRAL_CFG_KEYS)
 from bsp import sleep_pipeline as sp
+import sleep_features as sf
 
 
 # R&K (Sleep-EDF) -> AASM 5-class: merge S3+S4 -> N3; drop MOVEMENT / UNKNOWN.
@@ -47,7 +48,7 @@ class SleepEDFTrack(TrackAdapter):
     #: and both filter recipes, and the EEG band powers are integrated from a
     #: Chapter 7 estimator — so every stage-2 and stage-3 menu is real here.
     SUPPORTED_CFG_KEYS = (DENOISE_CFG_KEYS | SPECTRAL_CFG_KEYS
-                          | {"eeg_band", "filter_channels"})
+                          | {"eeg_band", "filter_channels", "feature_groups"})
 
     # ---- synthetic smoke (offline / CI) ----
     def smoke(self, n_subjects=5, n_epochs=80, seed=0, difficulty="medium"):
@@ -205,12 +206,26 @@ class SleepEDFTrack(TrackAdapter):
             for row, e in zip(rows, rec.epochs["eeg"]):
                 for name, band in sp._BANDS.items():
                     row[f"eeg_{name}"] = spectral_bandpower(e, rec.fs, band, method=method, **kw)
-        X = [list(r.values()) for r in rows]
-        return np.array(X), np.asarray(rec.labels), rec.group
+        X = np.array([list(r.values()) for r in rows])
+        # Iteration 3: optional feature groups on top of the supplied set
+        # (`cfg["feature_groups"]`, see tracks/sleep_features.py). Empty = row 2.4.
+        groups = cfg.get("feature_groups") or ()
+        if groups:
+            _, X = sf.add_feature_groups(rec, list(rows[0]), X, groups)
+        return X, np.asarray(rec.labels), rec.group
 
     def feature_names(self, cfg=None):
+        cfg = self._cfg(cfg)
         z = np.zeros(64)
-        return list(sp.epoch_features(z, z, z, 100.0).keys())
+        names = list(sp.epoch_features(z, z, z, 100.0).keys())
+        groups = cfg.get("feature_groups") or ()
+        if groups:
+            rng = np.random.default_rng(0)
+            dummy = Recording(group="_", fs=100.0, labels=np.array(["W"] * 3),
+                              epochs={k: rng.standard_normal((3, 3000))
+                                      for k in ("eeg", "eeg2", "eog", "emg")})
+            names, _ = sf.add_feature_groups(dummy, names, np.zeros((3, len(names))), groups)
+        return names
 
     def baseline(self, cfg=None):
         """Module 5 — the supplied random forest. `cfg["imbalance"]` selects how
@@ -283,6 +298,9 @@ class SleepEDFTrack(TrackAdapter):
             if missing:
                 print(f"[sleep_edf] {os.path.basename(psg)}: missing {missing}; skipping record.")
                 continue
+            # second EEG derivation, optional: only the 'pz' feature group reads it
+            if "EEG Pz-Oz" in raw.ch_names:
+                ch["eeg2"] = "EEG Pz-Oz"
             data = {k: raw.get_data(picks=v)[0] for k, v in ch.items()}
             events, ev_id = mne.events_from_annotations(
                 raw, event_id={k: i for i, k in enumerate(RK_TO_AASM)},
