@@ -19,6 +19,9 @@ CURRENT_CFG = {
     "filter_channels": ("eeg", "eeg2"),      # eeg2 = Pz-Oz, filtered like Fpz-Cz
     # module 3 — feature extraction (rows 3.1-3.7, tracks/sleep_features.py)
     "feature_groups": ("spindle", "eogemg", "pz", "night_norm"),
+    # module 4 — feature selection: not decided yet; the scaffold default
+    # (pass-through, all 26 features kept), written out so it is a visible choice
+    "select": "none",
     # module 5 — classification (row 2.1; re-test after cropping still pending)
     "imbalance": "none",
 }
