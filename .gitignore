@@ -4,7 +4,7 @@
 venv/
 
 # Downloaded Sleep-EDF data (large; re-downloadable)
-data_cache/
+data_cache/sleep_edf
 *.edf
 
 # Created by notebook cell 1 when the import fails (a clone of the course repo)
