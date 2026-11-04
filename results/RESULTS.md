@@ -175,6 +175,18 @@ silent higher mean._
   - Worst subjects now: SC404 (0.701) and SC407 (0.706).
   - Caveat: mean κ 0.763 sits at the human inter-rater level (~0.76). It is still optimistic, because the crop is decided from the true labels (see the open item on label-free cropping).
   - Prediction made before running: not recorded before running.
+- **Planned comparison: modules 4-5 (feature selection + classifier), iteration 4 (written 2026-11-04, BEFORE running any of it on the 10-subject folds)**
+  - Reference (the starting point for every row 4.x): row 3.8 = `CURRENT_CFG` (cropped ±30 min, EEG band-pass 0.3-35 Hz, 26 features: spindle + eogemg + pz + night_norm), RF 200 trees, `imbalance="none"`, `select="none"`, 10 training subjects (SC400-SC407, SC409, SC410), LOSO, seed 0 → mean κ 0.763 (sd 0.048, range 0.701-0.846). Re-run on 2026-11-04 on a second machine (Python 3.11 + lock file): identical per-subject κ.
+  - Reference confusion matrix (pooled, row-normalised), the cells to watch: N1→N1 0.44 (N1→W 0.18, N1→N2 0.24, N1→REM 0.13); N3→N3 0.77 (N3→N2 0.22); W→W 0.85; N2→N2 0.90; REM→REM 0.86. Worst subjects SC404 (0.701) and SC407 (0.706).
+  - Already seen once on the old 3-subject folds (while `classification.ipynb` was being checked, before this plan): reference 0.713, balanced 0.700, smote 0.703, anova k=20 0.713, anova k=12 0.667, tree 0.705, lasso 0.713, HistGradientBoosting 0.711. Counted in the comparison budget. This plan runs on the 10-subject folds, 7 of whose subjects were not used for any of those choices.
+  - Comparison budget: **4 configurations**, fixed now. Each changes ONE module-4/5 choice relative to row 3.8; nothing else is tried on these folds.
+    1. **4.1** `imbalance="balanced"` — the re-test promised in row 2.1: cropping cut Wake from ~68 % to ~15 % of epochs, so class weights are much less extreme than when row 2.1 was run.
+    2. **4.2** `select="anova"`, `select_k=12` — keep the 12 features with the largest between-stage F statistic (fitted inside each training fold). Does removing weaker features reduce noise/overfitting?
+    3. **4.3** `select="tree"` — keep features by random-forest importance (inside each fold); a second selection method, so a 4.2 result is not an artefact of ANOVA.
+    4. **4.4** HistGradientBoosting instead of the random forest (`StandardScaler` + `HistGradientBoostingClassifier(random_state=0)`, no class weights, same as `imbalance="none"`) — is the classifier itself limiting the pipeline?
+  - Not tested, and why: SMOTE (an interpolated "in-between" epoch has no clear physiological meaning; the course warns about it on small cohorts); lasso (on 26 features it kept all of them, i.e. identical to the reference); anova k=20 (removes only 6 features; k=12 is the more informative test).
+  - Decision rule (written before running): a change is adopted only if (a) mean κ rises by ≥ 0.02, (b) the worst-subject κ does not go down, and (c) at least 7 of the 10 subjects improve. Otherwise the reference is kept (simpler). Per-subject κ and the N1/N3 cells are read before the mean.
+  - Predictions (made before running): 4.1 no measurable difference — if balanced is now ≥ none, that reverses the row 2.1 decision; 4.2 slightly worse (every feature group was added because it helped); 4.3 no measurable difference (a random forest already down-weights uninformative features); 4.4 no measurable difference (±0.01), the features matter more than the learner.
 
 ## ⚠️ Before you fill in many rows — the garden of forking paths
 
