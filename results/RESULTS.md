@@ -175,7 +175,7 @@ silent higher mean._
     - 2.5 lights-off crop: 0.689 / 0.749 / 0.766 · 0.85 / 0.35 / 0.88 / 0.77 / 0.83
   - Reading: mean κ rose from 0.713 to 0.735 and the spread halved (sd 0.080 → 0.040), but the two numbers are not directly comparable, because the test set changed: the window contains 1852 W epochs instead of 943. The rise comes from Wake (recall 0.73 → 0.85, W→N1 0.22 → 0.11); N2, N3 and REM are about unchanged.
   - New error: N1 recall dropped 0.51 → 0.35, and N1→W is now 0.27. The N1 test epochs are the same in both rows (all sleep is inside both windows), so this is a real effect of the new crop: with twice as much Wake in training, the forest labels more N1 as W.
-  - Limitation: the window was only checked on young subjects. Sleep-EDF includes subjects up to 101 years old, who tend to spend longer awake in bed, so 9.5 h after lights-off may be too short for them.
+  - Limitation: the window was only checked on young subjects. Sleep-EDF includes subjects up to 101 years old, who tend to spend longer awake in bed, so 9.5 h after lights-off may be too short for them. | `6dc0dcc` |
 
 ## ⚠️ Before you fill in many rows — the garden of forking paths
 
