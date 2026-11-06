@@ -80,7 +80,7 @@ def lights_off_epochs(recs, cache_dir, csv_path=SUBJECTS_CSV):
 
         # 3. seconds from recording start to lights-off
         seconds = off_s - start_s
-        if seconds < 0:          # lights-off after midnight (e.g. 0:38), start was the afternoon before
+        if seconds < 0:          
             seconds += 24 * 3600
         off[record] = int(seconds // EPOCH_S)
     return off
