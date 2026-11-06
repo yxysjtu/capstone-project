@@ -1231,6 +1231,44 @@ class FittedModel:
 
 
 # --------------------------------------------------------------- base track
+def data_fingerprint(data_dir):
+    """Short hash of the data files in `data_dir` (relative names and sizes; cache files excluded).
+    Put it in a cache key so the cache is rebuilt when the data changes."""
+    import hashlib, json
+    files = []
+    for root, _, names in os.walk(data_dir):
+        for n in names:
+            if not n.startswith("_cache_"):
+                p = os.path.join(root, n)
+                files.append((os.path.relpath(p, data_dir), os.path.getsize(p)))
+    return hashlib.sha256(json.dumps(sorted(files)).encode()).hexdigest()[:12]
+
+
+def cached(step, key, compute, cache_dir):
+    """Run `compute()` once per `key` and reuse the saved result afterwards.
+
+    `key` must contain everything the result depends on: a version number for the code of this
+    step (bump it whenever you change that code), its settings, and the key of the step it builds
+    on, so that changing an earlier step also rebuilds every later one. Only cache per-recording
+    (stateless) steps and fixed feature extraction; never a transform fitted across recordings or
+    on labels (see `build_dataset`). Only load cache files you created yourself (they are pickles).
+    """
+    import hashlib, json, pickle
+    h = hashlib.sha256(json.dumps(key, sort_keys=True, default=str).encode()).hexdigest()[:12]
+    path = os.path.join(cache_dir, f"_cache_{step}_{h}.pkl")
+    if os.path.exists(path):
+        with open(path, "rb") as f:
+            out = pickle.load(f)
+        print(f"[cache] {step}: reused {os.path.basename(path)}")
+        return out
+    out = compute()
+    os.makedirs(cache_dir, exist_ok=True)
+    with open(path, "wb") as f:
+        pickle.dump(out, f, protocol=pickle.HIGHEST_PROTOCOL)
+    print(f"[cache] {step}: computed and saved {os.path.basename(path)}")
+    return out
+
+
 class TrackAdapter:
     meta: TrackMeta
 
@@ -1848,6 +1886,48 @@ class TrackAdapter:
         clf.fit(_transform(sel, X), y)
         return FittedModel(clf=clf, selector=sel, cfg=cfg)
 
+    #: bump when load()/Recording changes in a way that makes old caches wrong
+    CACHE_VERSION = 1
+
+    def load_cached(self, data_dir, cache_file=None, **load_kw):
+        """`load(data_dir)` once, then reuse a binary cache of the parsed recordings.
+
+        Parsing EDF/WFDB/MAT files is the slow part of every run; this saves the result next to the data
+        (or at `cache_file`) and loads it in seconds next time. The cache is rebuilt automatically when
+        the data files (names and sizes), the `load()` settings or `CACHE_VERSION` change. Only load
+        cache files you created yourself (they are pickles).
+        """
+        import hashlib, json, pickle
+        key = hashlib.sha256(json.dumps({"track": type(self).__name__, "version": self.CACHE_VERSION,
+                                         "load_kw": load_kw, "data": data_fingerprint(data_dir)},
+                                        sort_keys=True, default=str).encode()).hexdigest()[:12]
+        cache_file = cache_file or os.path.join(data_dir, f"_cache_{type(self).__name__}_{key}.pkl")
+        if os.path.exists(cache_file):
+            with open(cache_file, "rb") as f:
+                recs = pickle.load(f)
+            print(f"[{type(self).__name__}] loaded {len(recs)} recordings from cache {os.path.basename(cache_file)}")
+            return recs
+        recs = self.load(data_dir, **load_kw)
+        with open(cache_file, "wb") as f:
+            pickle.dump(recs, f, protocol=pickle.HIGHEST_PROTOCOL)
+        print(f"[{type(self).__name__}] parsed {len(recs)} recordings; cached to {os.path.basename(cache_file)}")
+        return recs
+
+    def split_holdout(self, recs):
+        """Split recordings into (train, holdout) using `meta.holdout_ids`.
+
+        Develop and cross-validate on `train` only. Use `holdout` once, at the end, to write
+        `predictions.csv` with the frozen final model (see HOLDOUT_EVALUATION.md)."""
+        hold = set(self.meta.holdout_ids)
+        return [r for r in recs if r.group not in hold], [r for r in recs if r.group in hold]
+
+    def assert_no_holdout(self, recs):
+        """Raise if any recording belongs to the hold-out set: call it on your training data."""
+        leaked = sorted({r.group for r in recs} & set(self.meta.holdout_ids))
+        if leaked:
+            raise ValueError(f"hold-out groups found in the data you are training on: {leaked}. "
+                             "Remove them; see HOLDOUT_EVALUATION.md.")
+
     def write_submission(self, test_recs, path, model, cfg=None,
                          allow_cfg_mismatch: bool = False):
         """Write a hold-out `predictions.csv` in the track's granularity:
@@ -2265,7 +2345,7 @@ def default_baseline(seed: int = 0, n_estimators: int = 200,
     | `"balanced"` *(default)* | per-class weights ∝ 1/frequency inside the loss | a quick, no-extra-data lever; the default so the scaffold is not silently majority-biased | it inflates minority influence uniformly — noisy minority rows get amplified too, and probabilities stop being calibrated |
     | `"balanced_subsample"` | as above, recomputed per tree (random forest only) | forests on strongly skewed data; slightly steadier than `"balanced"` | forest-specific; means nothing for an SVM or a k-NN |
     | `"resample"` | random over-sampling of the minority **inside `fit`** | you want the *decision boundary* moved, not just the loss reweighted | duplicated rows invite overfitting; done outside the fold it is a **leak** (this one is inside, on purpose) |
-    | `"smote"` | **synthetic** minority over-sampling **inside `fit`**: new rows interpolated between a minority sample and one of its k nearest minority neighbours | duplication is over-fitting and re-weighting is too blunt; you want a *denser*, less repetitive minority region for the boundary to sit in | the interpolated vector is only physiologically plausible if the neighbours were — blending two **different patients**, or an N2 and an N3 epoch, manufactures a body that does not exist. On these small biosignal cohorts (a handful of subjects, a few dozen minority rows) that is a live risk, not a footnote |
+    | `"smote"` | **synthetic** minority over-sampling **inside `fit`**: new rows interpolated between a minority sample and one of its k nearest minority neighbours | duplication is over-fitting and re-weighting is too blunt; you want a *denser*, less repetitive minority region for the boundary to sit in | the interpolated vector is only physiologically plausible if the neighbours were — blending two **different subjects**, or two adjacent classes a clinician would never blend, manufactures a recording that does not exist. On these small biosignal cohorts (a handful of subjects, a few dozen minority rows) that is a live risk, not a footnote |
     | `"adasyn"` | as `"smote"`, but synthesises more where the minority is hardest to classify | the minority is easy in one region and contested in another | it densifies exactly the boundary region, so mislabelled or artifactual minority rows get amplified the most |
     | `"threshold"` | keep the model, move the operating point on the minority class | recall matters more than precision and you can name the cost ratio | you must *report* the threshold — a tuned threshold chosen on test data is as dishonest as a leak |
 
