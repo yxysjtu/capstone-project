@@ -25,4 +25,7 @@ CURRENT_CFG = {
     # module 5 — classification (rows 2.1, 4.1, 4.4): random forest, no class weights;
     # re-tested after cropping on 10 subjects (row 4.1): "balanced" gave no measurable gain
     "imbalance": "none",
+    # validation: leave-one-subject-out up to 18 subjects (the framework switches to 5-fold
+    # GroupKFold above 12), so every training subject keeps its own kappa (row 6.2)
+    "loso_max_groups": 18,
 }
