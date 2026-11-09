@@ -6,13 +6,14 @@ and running stages 2-3. The result is tiny (~0.2 MB a night), and selection /
 classification experiments only need that result. So whoever has the memory
 builds it once with `save_features`, and everyone else calls `load_features`.
 
-A cache is only valid for the stage 2-3 settings it was built with. The file
-stores those settings (every feature-affecting cfg key, plus the cropping), and
-`load_features` refuses a file whose settings differ from the track's current
-ones — a stale cache would otherwise give old features under a new config with
-no error at all.
+A cache is only valid for the stage 2-3 settings AND the code it was built with.
+The file stores the settings (every feature-affecting cfg key, plus the cropping)
+and a hash of every source file that computes the features (`CODE_FILES`), and
+`load_features` refuses a file where either differs — a stale cache would
+otherwise give old features under a new config or edited code with no error.
 """
 from __future__ import annotations
+import hashlib
 import json
 import os
 import subprocess
@@ -22,13 +23,32 @@ import numpy as np
 
 DEFAULT_CROP = "crop_to_sleep(margin_min=30)"
 
+_TRACKS = os.path.dirname(os.path.abspath(__file__))
+_BSP = os.path.join(os.path.dirname(_TRACKS), "src", "bsp")
+#: every file whose content changes the feature matrix: loading, cropping, filters, features
+CODE_FILES = {name: os.path.join(_TRACKS, name)
+              for name in ("sleep_edf.py", "sleep_crop.py", "SC-subjects.csv",
+                           "sleep_features.py", "adapter.py")}
+CODE_FILES.update({f"bsp/{name}": os.path.join(_BSP, name)
+                   for name in ("sleep_pipeline.py", "biosignals.py")})
+
+
+def _code_hashes():
+    """Short hash of each file in CODE_FILES. Line endings are normalised first, so a
+    Windows (CRLF) and a Mac/Linux (LF) checkout of the same commit agree."""
+    out = {}
+    for name, path in sorted(CODE_FILES.items()):
+        with open(path, "rb") as f:
+            out[name] = hashlib.sha256(f.read().replace(b"\r\n", b"\n")).hexdigest()[:12]
+    return out
+
 
 def _fingerprint(track, crop):
-    """The settings that decide the feature matrix: stage 2-3 cfg keys + cropping."""
+    """What decides the feature matrix: stage 2-3 cfg keys, cropping and the code."""
     cfg = track._cfg()
     keys = sorted(k for k in track.feature_cfg_keys() if k in cfg)
-    return json.loads(json.dumps({"cfg": {k: cfg[k] for k in keys}, "crop": crop},
-                                 default=str, sort_keys=True))
+    return json.loads(json.dumps({"cfg": {k: cfg[k] for k in keys}, "crop": crop,
+                                  "code": _code_hashes()}, default=str, sort_keys=True))
 
 
 def _git_commit():
@@ -70,6 +90,8 @@ def load_features(path, track, crop=DEFAULT_CROP, subjects=None):
                           if got["cfg"].get(k) != want["cfg"].get(k))
             if got["crop"] != want["crop"]:
                 diff.append("crop")
-            raise ValueError(f"{path} was built with different stage 2-3 settings "
+            diff += [f"code {name}" for name in sorted(set(got.get("code", {})) | set(want["code"]))
+                     if got.get("code", {}).get(name) != want["code"].get(name)]
+            raise ValueError(f"{path} was built with different stage 2-3 settings or code "
                              f"(differs in: {', '.join(diff)}); rebuild it.")
         return d["X"], d["y"], d["groups"], info
