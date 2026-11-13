@@ -403,6 +403,7 @@ between iterations. Record what actually happened.
 | 3         | Xinyi | Module 3 feature extraction: `tracks/sleep_features.py` (6 feature groups), 7 planned configurations (rows 3.1-3.7, `notebooks/features.ipynb`); module 1 change: `load()` reads Pz-Oz; shared config `tracks/sleep_config.py`; `notebooks/classification.ipynb` starter for modules 4-5 | Ine         |
 | 3.8 | Xinyi | 10-subject run of row 3.7; merged the course's hold-out code (`HOLDOUT_SUBJECTS`, `download_holdout`, `assert_no_holdout`) into `tracks/sleep_edf.py`; hold-out checks and feature cache (`tracks/feature_cache.py`) in `notebooks/classification.ipynb` |  |
 | 6-7 | Xinyi | Took over modules 4-6 (roles swapped): lights-off reference (6.1), age-stratified training set and window check (6.2), full-night cross-validation (7.1-7.2); full-night submission (`tracks/sleep_submission.py`); source-code check in the feature cache |  |
+| 2, 4, 5, 8 | Soundharya | Modules 4-6: class imbalance (row 2.1); feature selection + classifier comparison, plan written before running (rows 4.1-4.4); sequence smoothing incl. the HMM / Viterbi code (rows 5.1-5.2); split-unit leakage check (random 0.824 vs subject-wise 0.761); the two iteration 8 options are my methods from rows 4.1 and 5.2; re-ran iteration 8 on a second machine on 2026-11-13 (identical per-subject κ) |  |
 
 ## Final numbers (fill in once, at the end)
 
